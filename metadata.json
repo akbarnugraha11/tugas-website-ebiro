@@ -1,0 +1,6 @@
+{
+  "name": "E-Pinjam Biro",
+  "description": "Sistem Booking & Peminjaman InFocus Biro Kampus berbasis web dengan desain modern dan interaktif.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

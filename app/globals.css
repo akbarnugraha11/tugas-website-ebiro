@@ -1,0 +1,106 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #4f46e5;
+  --color-accent: #14b8a6;
+}
+
+@layer utilities {
+  .glass-panel {
+    background-color: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .glass-card {
+    background-color: rgba(30, 41, 59, 0.4);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+  }
+
+  .glass-card-hover {
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  
+  .glass-card-hover:hover {
+    background-color: rgba(30, 41, 59, 0.55);
+    border-color: rgba(99, 102, 241, 0.3);
+    box-shadow: 0 12px 40px 0 rgba(99, 102, 241, 0.15);
+    transform: translateY(-2px);
+  }
+
+  .glass-input {
+    background-color: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc;
+    transition: all 0.2s ease;
+  }
+
+  .glass-input:focus {
+    background-color: rgba(15, 23, 42, 0.75);
+    border-color: rgba(99, 102, 241, 0.55);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25);
+    outline: none;
+  }
+
+  /* Custom styling scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.2);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+/* Animations */
+@keyframes glowPulse {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(251, 191, 36, 0.5);
+  }
+}
+
+.amber-pulse {
+  animation: glowPulse 2s infinite ease-in-out;
+}
+
+/* Ripple burst used by AnimatedButton */
+@keyframes ripple-burst {
+  to {
+    transform: scale(3.5);
+    opacity: 0;
+  }
+}
+
+/* Smooth tab indicator slide */
+@keyframes indicator-slide {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+.nav-active-indicator {
+  animation: indicator-slide 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transform-origin: left center;
+}
+
+/* Button press glow flash */
+@keyframes btn-flash {
+  0%   { box-shadow: 0 0 0px rgba(99,102,241,0); }
+  40%  { box-shadow: 0 0 18px rgba(99,102,241,0.45); }
+  100% { box-shadow: 0 0 0px rgba(99,102,241,0); }
+}
+
+.btn-press-flash:active {
+  animation: btn-flash 0.35s ease-out;
+}
