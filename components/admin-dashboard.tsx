@@ -107,18 +107,7 @@ export default function AdminDashboard({ onOpenDetail }: AdminDashboardProps = {
     }
   };
 
-  const handleAdminQuickReturn = async (loanId: string) => {
-    try {
-      await completeReturnWithCondition(loanId, 'Baik', 'Diserahkan langsung via admin');
-      addToast('InFocus berhasil diserahkan', 'success');
-      if (typeof onOpenDetail === 'function') {
-        onOpenDetail(loanId);
-      }
-    } catch (e) {
-      console.error(e);
-      addToast('Gagal mencatat penyerahan', 'error');
-    }
-  };
+
 
   const handleHandover = (loanId: string) => {
     approveBooking(loanId);
@@ -488,7 +477,7 @@ export default function AdminDashboard({ onOpenDetail }: AdminDashboardProps = {
                             {/* Action for Disetujui (Handover action) */}
                             {loan.status === 'Disetujui' && (
                               <button
-                                onClick={() => handleAdminQuickReturn(loan.id)}
+                                onClick={() => handleHandover(loan.id)}
                                 className="px-2.5 py-1.5 bg-green-600/15 hover:bg-green-600 border border-green-500/10 hover:border-green-500 text-green-400 hover:text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-0.5 cursor-pointer"
                                 id={`btn-handover-${loan.id}`}
                               >
