@@ -145,7 +145,7 @@ export default function LoginView() {
           <form onSubmit={handleLoginSubmit} className="space-y-4" id="login-form">
             <div>
               <label className="block text-slate-300 text-[10px] sm:text-xs font-semibold mb-1.5 uppercase tracking-wider">
-                NIM Mahasiswa atau ID Admin
+                NIM Mahasiswa
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
@@ -157,7 +157,7 @@ export default function LoginView() {
                   suppressHydrationWarning={true}
                   value={nimOrId}
                   onChange={(e) => setNimOrId(e.target.value)}
-                  placeholder="Masukkan NIM (contoh: 22019904) atau ID Admin"
+                  placeholder="Masukkan NIM (contoh: 22019904)"
                   className="w-full pl-9 pr-3 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm bg-slate-950/50 hover:bg-slate-950/80 focus:bg-slate-950/90 text-slate-200 outline-none transition-all border border-white/10 focus:border-indigo-500"
                   id="input-login-id"
                 />
