@@ -40,10 +40,10 @@ export default function HistoryView({ selectedLoanId, onCloseDetail, onOpenDetai
   if (!currentUser) return null;
 
   // Filter student's own loans
-  const studentLoans = loans.filter((l) => l.nim === currentUser.nimOrId);
+  const studentLoans = loans.filter((l: Loan) => l.nim === currentUser.nimOrId);
 
   // Apply filters
-  const filteredLoans = studentLoans.filter((loan) => {
+  const filteredLoans = studentLoans.filter((loan: Loan) => {
     // Search query matches eventName or itemName
     const matchesSearch = 
       loan.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -434,7 +434,7 @@ export default function HistoryView({ selectedLoanId, onCloseDetail, onOpenDetai
           const isActive = activeTab === tab;
           const count = tab === 'Semua' 
             ? studentLoans.length 
-            : studentLoans.filter(l => l.status === tab).length;
+            : studentLoans.filter((l: Loan) => l.status === tab).length;
 
           return (
             <button

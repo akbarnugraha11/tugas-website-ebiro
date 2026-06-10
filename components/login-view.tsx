@@ -53,7 +53,7 @@ export default function LoginView() {
     }, 800);
   };
 
-  const handleRegisterSubmit = (e: React.FormEvent) => {
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (regPassword !== regConfirmPassword) {
@@ -62,30 +62,28 @@ export default function LoginView() {
     }
 
     setIsSubmitting(true);
-    setTimeout(() => {
-      const success = registerStudent({
-        name: regName.trim(),
-        nimOrId: regNim.trim(),
-        password: regPassword,
-        dept: regDept,
-        email: regEmail.trim(),
-        phone: regPhone.trim()
-      });
-      setIsSubmitting(false);
-      if (success) {
-        // Switch to login mode and autopopulate credentials
-        setNimOrId(regNim.trim());
-        setPassword(regPassword);
-        setIsRegisterMode(false);
-        // Clear registration states
-        setRegNim('');
-        setRegName('');
-        setRegEmail('');
-        setRegPhone('');
-        setRegPassword('');
-        setRegConfirmPassword('');
-      }
-    }, 800);
+    const success = await registerStudent({
+      name: regName.trim(),
+      nimOrId: regNim.trim(),
+      password: regPassword,
+      dept: regDept,
+      email: regEmail.trim(),
+      phone: regPhone.trim()
+    });
+    setIsSubmitting(false);
+    if (success) {
+      // Switch to login mode and autopopulate credentials
+      setNimOrId(regNim.trim());
+      setPassword(regPassword);
+      setIsRegisterMode(false);
+      // Clear registration states
+      setRegNim('');
+      setRegName('');
+      setRegEmail('');
+      setRegPhone('');
+      setRegPassword('');
+      setRegConfirmPassword('');
+    }
   };
 
   if (!mounted) {

@@ -1,6 +1,11 @@
-'use client';
+ 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+// import { getMongoClient } from '@/lib/mongoClient'; // Removed for client build
+import { createContext, useState, useEffect, ReactNode, useContext } from 'react';
+
+// Test MongoDB connection on app start
+// MongoDB connection test moved into provider
+
 
 export type Role = 'mahasiswa' | 'admin';
 
@@ -109,7 +114,10 @@ interface EPinjamContextType {
   isLoggedIn: boolean;
   registeredUsers: RegisteredUser[];
   setRegisteredUsers: React.Dispatch<React.SetStateAction<RegisteredUser[]>>;
-  registerStudent: (user: { name: string; nimOrId: string; password?: string; dept?: string; email?: string; phone?: string }) => boolean;
+  registerStudent: (user: { name: string; nimOrId: string; password?: string; dept?: string; email?: string; phone?: string }) => Promise<boolean>;
+  toggleUserStatus: (nimOrId: string) => Promise<RegisteredUser | null>;
+  clearUserPenalty: (nimOrId: string) => Promise<RegisteredUser | null>;
+  deleteUser: (nimOrId: string) => Promise<boolean>;
   login: (nimOrId: string, password?: string, role?: Role) => boolean;
   logout: () => void;
 
@@ -262,7 +270,7 @@ function getUniqueId(prefix: string) {
   return `${prefix}-${globalIdCount}`;
 }
 
-export function EPinjamProvider({ children }: { children: React.ReactNode }) {
+export function EPinjamProvider({ children }: { children: ReactNode }) {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [activeRole, setActiveRole] = useState<Role>('mahasiswa');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -275,14 +283,10 @@ export function EPinjamProvider({ children }: { children: React.ReactNode }) {
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(INITIAL_LOGS);
   const [toasts, setToasts] = useState<{ id: string; type: 'success' | 'warning' | 'error'; message: string }[]>([]);
 
-  // Load state from localStorage on mount (for persistent simulation)
+  // Load state from localStorage & MongoDB on mount
   useEffect(() => {
     const savedUser = localStorage.getItem('epinjam_user');
     const savedRole = localStorage.getItem('epinjam_role');
-    const savedBarang = localStorage.getItem('epinjam_barang');
-    const savedLoans = localStorage.getItem('epinjam_loans');
-    const savedLogs = localStorage.getItem('epinjam_logs');
-    const savedRegisteredUsers = localStorage.getItem('epinjam_registered_users');
 
     setTimeout(() => {
       if (savedUser) {
@@ -292,34 +296,59 @@ export function EPinjamProvider({ children }: { children: React.ReactNode }) {
       if (savedRole) {
         setActiveRole(savedRole as Role);
       }
-      if (savedBarang) {
-        setBarangList(JSON.parse(savedBarang));
-      }
-      if (savedLoans) {
-        setLoans(JSON.parse(savedLoans));
-      }
-      if (savedLogs) {
-        setActivityLogs(JSON.parse(savedLogs));
-      }
-      if (savedRegisteredUsers) {
-        setRegisteredUsers(JSON.parse(savedRegisteredUsers));
-      } else {
-        const defaultUsers: RegisteredUser[] = [
-          { name: 'Pak Sastro Wardoyo', nimOrId: 'ADMIN', role: 'admin', password: 'biropinjam123', avatarUrl: 'https://picsum.photos/seed/admin/150/150', email: 'sastro.wardoyo@biro.kampus.ac.id', phone: '+62 811-2233-4455', dept: 'Administrasi BAAK', active: 'Aktif', status: 'Clear', borrowsCount: 0 },
-          { name: 'Budi Santoso', nimOrId: '22019904', role: 'mahasiswa', password: 'biropinjam123', avatarUrl: 'https://picsum.photos/seed/student1/150/150', email: 'budi.santoso@mhs.kampus.ac.id', phone: '+62 812-4455-8899', dept: 'Informatika', active: 'Aktif', status: 'Clear', borrowsCount: 8 },
-          { name: 'Siti Aminah', nimOrId: '22019905', role: 'mahasiswa', password: 'biropinjam123', avatarUrl: 'https://picsum.photos/seed/student2/150/150', email: 'siti.aminah@mhs.kampus.ac.id', phone: '+62 812-7788-9900', dept: 'Sistem Informasi', active: 'Aktif', status: 'Clear', borrowsCount: 15 },
-          { name: 'Agus Hermawan', nimOrId: '22019906', role: 'mahasiswa', password: 'biropinjam123', avatarUrl: 'https://picsum.photos/seed/student3/150/150', email: 'agus.hermawan@mhs.kampus.ac.id', phone: '+62 813-1122-3344', dept: 'Teknik Elektro', active: 'Aktif', status: 'Clear', borrowsCount: 6 },
-          { name: 'Rina Widya', nimOrId: '22019907', role: 'mahasiswa', password: 'biropinjam123', avatarUrl: 'https://picsum.photos/seed/student4/150/150', email: 'rina.widya@mhs.kampus.ac.id', phone: '+62 813-5566-7788', dept: 'Informatika', active: 'Ban', status: 'Penalti Aktif', borrowsCount: 3 }
-        ];
-        setRegisteredUsers(defaultUsers);
-        localStorage.setItem('epinjam_registered_users', JSON.stringify(defaultUsers));
-      }
     }, 0);
+
+    // Async load all data from MongoDB API
+    const loadAllFromDB = async () => {
+      try {
+        const [usersRes, barangRes, loansRes, logsRes] = await Promise.all([
+          fetch('/api/users'),
+          fetch('/api/barang'),
+          fetch('/api/loans'),
+          fetch('/api/logs'),
+        ]);
+
+        if (usersRes.ok) {
+          const data = await usersRes.json();
+          if (data.users) setRegisteredUsers(data.users);
+        }
+        if (barangRes.ok) {
+          const data = await barangRes.json();
+          if (data.barang) setBarangList(data.barang);
+        }
+        if (loansRes.ok) {
+          const data = await loansRes.json();
+          if (data.loans) setLoans(data.loans);
+        }
+        if (logsRes.ok) {
+          const data = await logsRes.json();
+          if (data.logs) setActivityLogs(data.logs);
+        }
+      } catch (err) {
+        console.error('Failed to load data from MongoDB:', err);
+      }
+    };
+    loadAllFromDB();
   }, []);
 
-  // Sync to localStorage
+  // Sync state changes to MongoDB in the background (fire-and-forget)
+  const syncToMongo = (endpoint: string, payload: Record<string, any>) => {
+    fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch((err) => console.error(`Failed to sync to ${endpoint}:`, err));
+  };
+
   const saveToLocal = (key: string, data: any) => {
-    localStorage.setItem(key, JSON.stringify(data));
+    // Sync to MongoDB based on key
+    if (key === 'epinjam_barang') {
+      syncToMongo('/api/barang', { barang: data });
+    } else if (key === 'epinjam_loans') {
+      syncToMongo('/api/loans', { loans: data });
+    } else if (key === 'epinjam_logs') {
+      syncToMongo('/api/logs', { logs: data });
+    }
   };
 
   const addToast = (message: string, type: 'success' | 'warning' | 'error') => {
@@ -332,7 +361,7 @@ export function EPinjamProvider({ children }: { children: React.ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   };
 
-  const registerStudent = (user: { name: string; nimOrId: string; password?: string; dept?: string; email?: string; phone?: string }): boolean => {
+  const registerStudent = async (user: { name: string; nimOrId: string; password?: string; dept?: string; email?: string; phone?: string }): Promise<boolean> => {
     const exists = registeredUsers.some(
       (u) => u.nimOrId.trim().toLowerCase() === user.nimOrId.trim().toLowerCase()
     );
@@ -355,13 +384,132 @@ export function EPinjamProvider({ children }: { children: React.ReactNode }) {
       borrowsCount: 0
     };
 
-    const updated = [...registeredUsers, newStudent];
+    try {
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newStudent),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        addToast(`Gagal: ${errorData.error || 'Terjadi kesalahan database'}`, 'error');
+        return false;
+      }
+
+      const data = await response.json();
+      const updated = [...registeredUsers, data.user];
+      setRegisteredUsers(updated);
+
+      addActivityLog(`Mahasiswa baru terdaftar: ${newStudent.name} (NIM: ${newStudent.nimOrId})`, 'submit');
+      addToast('Pendaftaran akun kemahasiswaan E-Pinjam berhasil! Silakan masuk.', 'success');
+      return true;
+    } catch (err) {
+      console.error('Error registering student:', err);
+      addToast('Gagal mendaftar: Koneksi database bermasalah.', 'error');
+      return false;
+    }
+  };
+
+  const toggleUserStatus = async (userId: string): Promise<RegisteredUser | null> => {
+    let targetUser: RegisteredUser | null = null;
+
+    const updated = registeredUsers.map((u) => {
+      if (u.nimOrId === userId) {
+        const nextActive: 'Aktif' | 'Ban' = u.active === 'Aktif' ? 'Ban' : 'Aktif';
+        targetUser = { ...u, active: nextActive };
+        return targetUser;
+      }
+      return u;
+    });
+
+    if (!targetUser) return null;
+
+    const finalUser = targetUser as RegisteredUser;
     setRegisteredUsers(updated);
-    saveToLocal('epinjam_registered_users', updated);
-    
-    addActivityLog(`Mahasiswa baru terdaftar: ${newStudent.name} (NIM: ${newStudent.nimOrId})`, 'submit');
-    addToast('Pendaftaran akun kemahasiswaan E-Pinjam berhasil! Silakan masuk.', 'success');
-    return true;
+    addToast(`Status ${finalUser.name} diubah menjadi ${finalUser.active}!`, finalUser.active === 'Ban' ? 'error' : 'success');
+
+    try {
+      const response = await fetch('/api/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nimOrId: userId,
+          update: { active: finalUser.active }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update user status in database.');
+      }
+    } catch (err) {
+      console.error('Error updating user status in DB:', err);
+      addToast('Gagal menyinkronkan status ke database.', 'error');
+    }
+
+    return finalUser;
+  };
+
+  const clearUserPenalty = async (userId: string): Promise<RegisteredUser | null> => {
+    let targetUser: RegisteredUser | null = null;
+
+    const updated = registeredUsers.map((u) => {
+      if (u.nimOrId === userId) {
+        targetUser = { ...u, status: 'Clear' as const };
+        return targetUser;
+      }
+      return u;
+    });
+
+    if (!targetUser) return null;
+
+    setRegisteredUsers(updated);
+    addToast(`Sanksi denda untuk ${(targetUser as RegisteredUser).name} telah dibersihkan secara administratif.`, 'success');
+
+    try {
+      const response = await fetch('/api/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nimOrId: userId,
+          update: { status: 'Clear' }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to clear user penalty in database.');
+      }
+    } catch (err) {
+      console.error('Error clearing user penalty in DB:', err);
+      addToast('Gagal menyinkronkan pembersihan sanksi ke database.', 'error');
+    }
+
+    return targetUser;
+  };
+
+  const deleteUser = async (nimOrId: string): Promise<boolean> => {
+    try {
+      const response = await fetch('/api/users/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nimOrId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        addToast(`Gagal menghapus: ${errorData.error || 'Terjadi kesalahan'}`, 'error');
+        return false;
+      }
+
+      setRegisteredUsers((prev) => prev.filter((u) => u.nimOrId !== nimOrId));
+      addActivityLog(`Akun pengguna dihapus oleh Admin: NIM ${nimOrId}`, 'penalty');
+      addToast('Akun pengguna berhasil dihapus dari sistem dan database!', 'success');
+      return true;
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      addToast('Gagal menghapus akun: Koneksi database bermasalah.', 'error');
+      return false;
+    }
   };
 
   const login = (nimOrId: string, password?: string, role?: Role): boolean => {
@@ -449,7 +597,7 @@ export function EPinjamProvider({ children }: { children: React.ReactNode }) {
 
   const createBooking = (booking: Omit<Loan, 'id' | 'createdAt' | 'status' | 'timelineStep' | 'studentName'>): string => {
     const activeStates: Status[] = ['Menunggu', 'Disetujui', 'Dipinjam'];
-    const activeCount = loans.filter(l => l.nim === booking.nim && activeStates.includes(l.status)).length;
+    const activeCount = loans.filter((l: Loan) => l.nim === booking.nim && activeStates.includes(l.status)).length;
     
     if (activeCount >= 2) {
       addToast('Gagal: Batas maksimal pinjaman aktif terlampaui! (Maksimal 2 aktif sekaligus)', 'error');
@@ -806,6 +954,9 @@ export function EPinjamProvider({ children }: { children: React.ReactNode }) {
         registeredUsers,
         setRegisteredUsers,
         registerStudent,
+        toggleUserStatus,
+        clearUserPenalty,
+        deleteUser,
         login,
         logout,
         currentTab,

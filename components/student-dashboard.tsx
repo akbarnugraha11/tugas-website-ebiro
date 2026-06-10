@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useEPinjam } from '@/lib/state-context';
+import { useEPinjam, Loan } from '@/lib/state-context';
 import { getStatusStyles } from '@/lib/utils';
 import { 
   History, 
@@ -56,13 +56,13 @@ export default function StudentDashboard({ onOpenDetail }: StudentDashboardProps
   if (!currentUser) return null;
 
   // Filter student's loans
-  const studentLoans = loans.filter(l => l.nim === currentUser.nimOrId);
+  const studentLoans = loans.filter((l: Loan) => l.nim === currentUser.nimOrId);
 
   // Stats calculation
   const totalPinjaman = studentLoans.length;
-  const sedangDipinjam = studentLoans.filter(l => l.status === 'Dipinjam').length;
-  const selesaiCount = studentLoans.filter(l => l.status === 'Selesai').length;
-  const hasPenalti = studentLoans.some(l => l.status === 'Terlambat' || l.penaltiActive);
+  const sedangDipinjam = studentLoans.filter((l: Loan) => l.status === 'Dipinjam').length;
+  const selesaiCount = studentLoans.filter((l: Loan) => l.status === 'Selesai').length;
+  const hasPenalti = studentLoans.some((l: Loan) => l.status === 'Terlambat' || l.penaltiActive);
 
   // Daily Slots definitions for Sat, 23 May 2026 (today)
   const timeSlots = [

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useEPinjam } from '@/lib/state-context';
+import { useEPinjam, Loan, Barang } from '@/lib/state-context';
 import { 
   User, 
   Mail, 
@@ -22,7 +22,8 @@ import {
   Shield,
   AlertCircle,
   FileText,
-  Download
+  Download,
+  Trash
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { motion, AnimatePresence } from 'motion/react';
@@ -47,7 +48,7 @@ export function StudentProfileView() {
 
   if (!currentUser) return null;
 
-  const totalLogsCount = loans.filter(l => l.nim === currentUser.nimOrId).length;
+  const totalLogsCount = loans.filter((l: Loan) => l.nim === currentUser.nimOrId).length;
 
   return (
     <div className="max-w-2xl mx-auto space-y-6" id="profile-view-root">
@@ -206,7 +207,7 @@ export function StudentAvailableCalendarView() {
 
       {/* Schedule Board for each proyektor */}
       <div className="space-y-6" id="projector-schedule-gantt">
-        {barangList.filter(b => b.active).map((barang) => {
+        {barangList.filter((b: Barang) => b.active).map((barang: Barang) => {
           return (
             <div key={barang.id} className="glass-card rounded-2xl border border-white/5 overflow-hidden shadow-xl" id={`gantt-row-${barang.id}`}>
               {/* Header inside row with status specifications */}
@@ -235,7 +236,7 @@ export function StudentAvailableCalendarView() {
               <div className="p-4 bg-slate-950/10 divide-y divide-white/5" id={`slots-container-${barang.id}`}>
                 {allTimeSlots.map((slot) => {
                   // Find if there's any active loan
-                  const activeLoan = loans.find(l => 
+                  const activeLoan = loans.find((l: Loan) => 
                     l.itemId === barang.id && 
                     l.date === selectedDate && 
                     l.timeSlot === slot &&
@@ -320,7 +321,7 @@ export function StudentAvailableCalendarView() {
 }
 
 export function AdminUsersView() {
-  const { loans, addToast, registeredUsers, setRegisteredUsers } = useEPinjam();
+  const { loans, addToast, registeredUsers, toggleUserStatus, clearUserPenalty, deleteUser } = useEPinjam();
   
   const users = (registeredUsers || [])
     .filter((u) => u.role === 'mahasiswa')
@@ -375,58 +376,57 @@ export function AdminUsersView() {
     }));
   };
 
-  const handleToggleStatus = (userId: string) => {
-    setRegisteredUsers(prev => prev.map(u => {
-      if (u.nimOrId === userId) {
-        const nextActive: 'Aktif' | 'Ban' = u.active === 'Aktif' ? 'Ban' : 'Aktif';
-        addToast(`Status ${u.name} diubah menjadi ${nextActive}!`, nextActive === 'Ban' ? 'error' : 'success');
-        addAuditLog(userId, `Akses akun diubah menjadi: ${nextActive}`, 'Super Admin');
-        const updated = { ...u, active: nextActive };
-        if (selectedUser?.ID === userId) {
-          setSelectedUser({
-            name: updated.name,
-            ID: updated.nimOrId,
-            dept: updated.dept || 'Informatika',
-            active: updated.active || 'Aktif',
-            borrowsCount: updated.borrowsCount ?? loans.filter(l => l.nim === updated.nimOrId).length,
-            status: updated.status || 'Clear',
-            email: updated.email || `${updated.nimOrId}@mhs.kampus.ac.id`,
-            phone: updated.phone || '+62 812-4455-8899'
-          });
-        }
-        return updated;
+  const handleToggleStatus = async (userId: string) => {
+    const updated = await toggleUserStatus(userId);
+    if (updated) {
+      addAuditLog(userId, `Akses akun diubah menjadi: ${updated.active}`, 'Super Admin');
+      if (selectedUser?.ID === userId) {
+        setSelectedUser({
+          name: updated.name,
+          ID: updated.nimOrId,
+          dept: updated.dept || 'Informatika',
+          active: updated.active || 'Aktif',
+          borrowsCount: updated.borrowsCount ?? loans.filter(l => l.nim === updated.nimOrId).length,
+          status: updated.status || 'Clear',
+          email: updated.email || `${updated.nimOrId}@mhs.kampus.ac.id`,
+          phone: updated.phone || '+62 812-4455-8899'
+        });
       }
-      return u;
-    }));
+    }
   };
 
-  const handleClearPenalty = (userId: string) => {
-    setRegisteredUsers(prev => prev.map(u => {
-      if (u.nimOrId === userId) {
-        addToast(`Sanksi denda untuk ${u.name} telah dibersihkan secara administratif.`, 'success');
-        addAuditLog(userId, 'Sanksi denda dibersihkan', 'Super Admin');
-        const updated = { ...u, status: 'Clear' as const };
-        if (selectedUser?.ID === userId) {
-          setSelectedUser({
-            name: updated.name,
-            ID: updated.nimOrId,
-            dept: updated.dept || 'Informatika',
-            active: updated.active || 'Aktif',
-            borrowsCount: updated.borrowsCount ?? loans.filter(l => l.nim === updated.nimOrId).length,
-            status: 'Clear',
-            email: updated.email || `${updated.nimOrId}@mhs.kampus.ac.id`,
-            phone: updated.phone || '+62 812-4455-8899'
-          });
-        }
-        return updated;
+  const handleClearPenalty = async (userId: string) => {
+    const updated = await clearUserPenalty(userId);
+    if (updated) {
+      addAuditLog(userId, 'Sanksi denda dibersihkan', 'Super Admin');
+      if (selectedUser?.ID === userId) {
+        setSelectedUser({
+          name: updated.name,
+          ID: updated.nimOrId,
+          dept: updated.dept || 'Informatika',
+          active: updated.active || 'Aktif',
+          borrowsCount: updated.borrowsCount ?? loans.filter(l => l.nim === updated.nimOrId).length,
+          status: 'Clear',
+          email: updated.email || `${updated.nimOrId}@mhs.kampus.ac.id`,
+          phone: updated.phone || '+62 812-4455-8899'
+        });
       }
-      return u;
-    }));
+    }
   };
 
   const handleSendWarning = (user: any) => {
     addToast(`Peringatan resmi terkirim ke mahasiswa ${user.name} (${user.email}).`, 'warning');
     addAuditLog(user.ID, `Peringatan resmi dikirim: ${user.email}`, 'Super Admin');
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    const isConfirmed = window.confirm(`Apakah Anda yakin ingin menghapus permanen akun mahasiswa dengan NIM ${userId}? Tindakan ini juga akan menghapusnya dari database.`);
+    if (!isConfirmed) return;
+
+    const success = await deleteUser(userId);
+    if (success) {
+      setSelectedUser(null);
+    }
   };
 
   return (
@@ -557,7 +557,7 @@ export function AdminUsersView() {
                 {/* Account Governance (Interaction) */}
                 <div className="space-y-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block text-xs">ADMIN GOVERNANCE</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     
                     <button
                       type="button"
@@ -593,6 +593,15 @@ export function AdminUsersView() {
                     >
                       <AlertTriangle className="w-3.5 h-3.5" />
                       Kirim Alert
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteUser(selectedUser.ID)}
+                      className="py-2 px-3 rounded-lg border bg-rose-600/10 hover:bg-rose-600 border-rose-500/15 hover:border-rose-500 text-rose-400 hover:text-white text-center font-bold text-[10px] transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      <Trash className="w-3.5 h-3.5" />
+                      Hapus Akun
                     </button>
 
                   </div>

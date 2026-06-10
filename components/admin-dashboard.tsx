@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useEPinjam, Loan, Status } from '@/lib/state-context';
+import { useEPinjam, Loan, Status, Barang } from '@/lib/state-context';
 import { getStatusStyles } from '@/lib/utils';
 import { 
   Users, 
@@ -58,11 +58,11 @@ export default function AdminDashboard({ onOpenDetail }: AdminDashboardProps = {
   const [returnNotes, setReturnNotes] = useState('');
 
   // Filters / calculations
-  const pendingLoans = loans.filter((l) => l.status === 'Menunggu');
-  const activeBorrowed = loans.filter((l) => l.status === 'Dipinjam' || l.status === 'Disetujui' || l.status === 'Terlambat');
-  const extensionRequests = loans.filter((l) => l.extendRequest === 'pending');
-  const availableInFocus = barangList.filter((b) => b.status === 'Tersedia' && b.active);
-  const totalArrearsCount = loans.filter((l) => l.status === 'Terlambat').length;
+  const pendingLoans = loans.filter((l: Loan) => l.status === 'Menunggu');
+  const activeBorrowed = loans.filter((l: Loan) => l.status === 'Dipinjam' || l.status === 'Disetujui' || l.status === 'Terlambat');
+  const extensionRequests = loans.filter((l: Loan) => l.extendRequest === 'pending');
+  const availableInFocus = barangList.filter((b: Barang) => b.status === 'Tersedia' && b.active);
+  const totalArrearsCount = loans.filter((l: Loan) => l.status === 'Terlambat').length;
 
   // Chart data: borrowing frequency across 7 days
   const chartData = [
@@ -370,7 +370,7 @@ export default function AdminDashboard({ onOpenDetail }: AdminDashboardProps = {
           <div className="absolute left-6.5 top-8 bottom-8 w-px bg-slate-800" />
           
           <div className="space-y-4 relative" id="timeline-list">
-            {activityLogs.map((log) => {
+            {activityLogs.map((log, index) => {
               let dotColor = 'bg-blue-500 ring-blue-500/20';
               if (log.type === 'reject') dotColor = 'bg-rose-500 ring-rose-500/20';
               if (log.type === 'penalty') dotColor = 'bg-amber-500 ring-amber-500/20';
@@ -379,9 +379,9 @@ export default function AdminDashboard({ onOpenDetail }: AdminDashboardProps = {
 
               return (
                 <div 
-                  key={log.id}
+                  key={`${log.id}-${index}`}
                   className="flex items-start gap-4"
-                  id={`timeline-log-${log.id}`}
+                  id={`timeline-log-${log.id}-${index}`}
                 >
                   <div className={`w-3.5 h-3.5 rounded-full ${dotColor} ring-4 mt-0.5 flex-shrink-0 z-10`} />
                   <div className="flex-1 min-w-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1">
@@ -482,14 +482,13 @@ export default function AdminDashboard({ onOpenDetail }: AdminDashboardProps = {
                                 >
                                   Catat Kembali
                                 </button>
-                                {/* We can keep this quick return for admin if needed, but it's redundant with Catat Kembali */}
                               </>
                             )}
 
                             {/* Action for Disetujui (Handover action) */}
                             {loan.status === 'Disetujui' && (
                               <button
-                                onClick={() => handleHandover(loan.id)}
+                                onClick={() => handleAdminQuickReturn(loan.id)}
                                 className="px-2.5 py-1.5 bg-green-600/15 hover:bg-green-600 border border-green-500/10 hover:border-green-500 text-green-400 hover:text-white rounded-lg text-[10px] font-bold transition-all flex items-center gap-0.5 cursor-pointer"
                                 id={`btn-handover-${loan.id}`}
                               >
@@ -601,7 +600,7 @@ export default function AdminDashboard({ onOpenDetail }: AdminDashboardProps = {
           <div className="absolute left-6.5 top-8 bottom-8 w-px bg-slate-800" />
           
           <div className="space-y-4 relative" id="timeline-list">
-            {activityLogs.map((log) => {
+            {activityLogs.map((log, index) => {
               let dotColor = 'bg-blue-500 ring-blue-500/20';
               if (log.type === 'reject') dotColor = 'bg-rose-500 ring-rose-500/20';
               if (log.type === 'penalty') dotColor = 'bg-amber-500 ring-amber-500/20';
@@ -610,9 +609,9 @@ export default function AdminDashboard({ onOpenDetail }: AdminDashboardProps = {
 
               return (
                 <div 
-                  key={log.id}
+                  key={`${log.id}-${index}`}
                   className="flex items-start gap-4"
-                  id={`timeline-log-${log.id}`}
+                  id={`timeline-log-${log.id}-${index}`}
                 >
                   <div className={`w-3.5 h-3.5 rounded-full ${dotColor} ring-4 mt-0.5 flex-shrink-0 z-10`} />
                   <div className="flex-1 min-w-0 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1 font-sans">
