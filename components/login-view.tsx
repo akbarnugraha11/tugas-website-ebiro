@@ -405,30 +405,7 @@ export default function LoginView() {
           </form>
         )}
 
-        {/* Quick Demo Assist - Click to Autofill Credentials */}
-        {!isRegisterMode && (
-          <div className="mt-4 p-3 bg-indigo-950/40 rounded-xl border border-indigo-500/10 text-[10px] sm:text-xs" id="quick-login-hints">
-            <p className="font-semibold text-indigo-300 mb-1 flex items-center gap-1">
-              <span>💡</span> Akses Cepat Demo (Klik untuk Autofill):
-            </p>
-            <div className="flex flex-wrap gap-2 mt-1.5">
-              <button
-                type="button"
-                onClick={() => handleQuickFill('22019904', 'biropinjam123')}
-                className="px-2 py-1 text-[10px] bg-indigo-900/30 text-indigo-300 hover:bg-indigo-900/60 rounded border border-indigo-500/20 cursor-pointer transition-colors"
-              >
-                NIM Budi (Mahasiswa)
-              </button>
-              <button
-                type="button"
-                onClick={() => handleQuickFill('ADMIN', 'biropinjam123')}
-                className="px-2 py-1 text-[10px] bg-indigo-900/30 text-indigo-300 hover:bg-indigo-900/60 rounded border border-indigo-500/20 cursor-pointer transition-colors"
-              >
-                ID Admin (ADMIN)
-              </button>
-            </div>
-          </div>
-        )}
+
 
         {/* Mode Switcher footer link */}
         <div className="mt-5 text-center text-xs text-slate-400">
