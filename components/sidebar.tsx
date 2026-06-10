@@ -134,23 +134,23 @@ export default function Sidebar() {
 
       {/* MOBILE COLLAPSIBLE BOTTOM NAV */}
       <nav 
-        className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950/90 backdrop-blur-md border-t border-white/5 px-2 py-1 flex justify-around items-center z-50 shadow-2xl"
+        className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-950/90 backdrop-blur-md border-t border-white/5 px-2 py-1 flex items-center z-50 shadow-2xl overflow-x-auto gap-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         id="mobile-navigation"
       >
-        {menuItems.slice(0, 5).map((item) => {
+        {menuItems.map((item) => {
           const Icon = item.icon;
           const isActive = currentTab === item.name;
           return (
             <button
               key={item.name + '-mobile'}
               onClick={() => setCurrentTab(item.name)}
-              className={`flex flex-col items-center justify-center p-1.5 rounded-lg transition-all flex-1 cursor-pointer relative ${
+              className={`flex flex-col items-center justify-center p-1.5 rounded-lg transition-all min-w-[76px] cursor-pointer relative flex-shrink-0 ${
                 isActive ? 'text-indigo-400 font-bold' : 'text-slate-500 hover:text-slate-300'
               }`}
               id={`nav-mob-${item.name.toLowerCase().replace(/\s+/g, '-')}`}
             >
               <Icon className="w-5 h-5 mb-0.5" />
-              <span className="text-[9px] tracking-tight truncate max-w-[56px]">{item.name}</span>
+              <span className="text-[9px] tracking-tight truncate w-full px-1 text-center">{item.name}</span>
               {item.badge !== undefined && (
                 <span className="absolute top-0 right-4 bg-amber-500 text-slate-950 text-[8px] font-extrabold w-3.5 h-3.5 rounded-full flex items-center justify-center">
                   {item.badge}
@@ -159,6 +159,16 @@ export default function Sidebar() {
             </button>
           );
         })}
+        
+        {/* Mobile Logout Button */}
+        <button
+          onClick={logout}
+          className="flex flex-col items-center justify-center p-1.5 rounded-lg transition-all min-w-[72px] cursor-pointer relative flex-shrink-0 text-rose-500 hover:text-rose-400"
+          id="nav-mob-logout"
+        >
+          <LogOut className="w-5 h-5 mb-0.5" />
+          <span className="text-[9px] tracking-tight truncate w-full px-1 text-center">Keluar</span>
+        </button>
       </nav>
     </>
   );
