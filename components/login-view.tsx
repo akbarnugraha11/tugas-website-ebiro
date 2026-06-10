@@ -207,10 +207,7 @@ export default function LoginView() {
               </div>
             </div>
 
-            {/* SSO Routing Info */}
-            <div className="p-3 bg-slate-950/40 rounded-xl border border-white/5 text-[10px] sm:text-xs text-slate-400 leading-normal">
-              💡 <span className="text-slate-300 font-semibold">Integrasi SSO:</span> Cukup masukkan NIM atau ID Anda. Sistem akan mendeteksi peran Anda secara otomatis dan mengarahkan ke halaman <span className="text-teal-400">Admin</span> atau <span className="text-indigo-400">Mahasiswa</span> yang sesuai.
-            </div>
+
 
             <button
               type="submit"
